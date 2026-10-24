@@ -732,22 +732,56 @@ async function restoreRecipe(id){
     state.recipes.unshift(recipe);
     state.trash = state.trash.filter(x=>x.id!==id);
     saveLocal(); render();
-  } else {
+    toast('↩️ Восстановлено');
+    return;
+  }
+  // optimistic
+  state.recipes.unshift(recipe);
+  state.trash = state.trash.filter(x=>x.id!==id);
+  render();
+  try {
     await fbAddRecipe(recipe);
     await deleteDoc(doc(state.db,'households',state.householdId,'trash',id));
+    toast('↩️ Восстановлено');
+  } catch(e){
+    console.error(e);
+    state.recipes = state.recipes.filter(x=>x.id!==recipe.id);
+    state.trash.unshift(r);
+    render();
+    toast('❌ Ошибка восстановления');
   }
-  toast('↩️ Восстановлено');
 }
 
 async function hardDeleteTrash(id){
   if(!confirm('Удалить навсегда? Это действие необратимо.')) return;
+  const item = state.trash.find(x=>x.id===id);
   if(state.localMode){
     state.trash = state.trash.filter(x=>x.id!==id);
     saveLocal(); render();
-  } else {
-    await deleteDoc(doc(state.db,'households',state.householdId,'trash',id));
+    toast('❌ Удалено навсегда');
+    return;
   }
-  toast('❌ Удалено навсегда');
+  // optimistic
+  state.trash = state.trash.filter(x=>x.id!==id);
+  render();
+  try {
+    await deleteDoc(doc(state.db,'households',state.householdId,'trash',id));
+    toast('❌ Удалено навсегда');
+  } catch(e){
+    console.error(e);
+    if(item) state.trash.unshift(item);
+    render();
+    toast('❌ Ошибка удаления');
+  }
+}
+
+function deletedMs(r){
+  const d = r.deletedAt;
+  if(d && typeof d.toMillis === 'function'){
+    try { const m = d.toMillis(); if(m) return m; } catch(e){}
+  }
+  if(typeof d === 'number') return d;
+  return r._deletedAtMs || Date.now();
 }
 
 function purgeExpiredTrashLocal(){
@@ -761,7 +795,7 @@ async function purgeExpiredTrashFirebase(){
   const now = Date.now();
   const THIRTY = 30*24*60*60*1000;
   for(const r of state.trash){
-    const ts = r._deletedAtMs || (r.deletedAt?.toMillis?.() || 0);
+    const ts = deletedMs(r);
     if(ts && (now - ts) >= THIRTY){
       try { await deleteDoc(doc(state.db,'households',state.householdId,'trash',r.id)); } catch(e){}
     }
@@ -842,7 +876,7 @@ function renderRecipes(main){
       <div style="margin-top:10px">
         ${trashItems.length===0 ? '<p class="muted">Пусто</p>' : ''}
         ${trashItems.map(r => {
-          const daysLeft = Math.max(0, 30 - Math.floor((Date.now() - (r.deletedAt||r._deletedAtMs||0))/(24*60*60*1000)));
+          const daysLeft = Math.max(0, 30 - Math.floor((Date.now() - deletedMs(r))/(24*60*60*1000)));
           return `<div class="recipe-card" style="opacity:0.85">
             <h3>${escapeHtml(r.name)}</h3>
             <div class="muted">Удалён. Осталось дней до автоудаления: ${daysLeft}</div>
