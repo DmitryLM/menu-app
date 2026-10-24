@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🍽️ Меню на неделю</title>
+<style>
+  :root {
+    --cream: #FFECC0;
+    --peach: #FFC29B;
+    --pink: #F39F9F;
+    --berry: #B95E82;
+    --text: #4a2a3a;
+    --muted: #7a5a6a;
+    --card: #ffffff;
+    --shadow: 0 4px 14px rgba(185,94,130,0.15);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--cream); color: var(--text); line-height: 1.5;
+  }
+  header {
+    background: linear-gradient(135deg, var(--berry), var(--pink));
+    color: #fff; padding: 18px 20px; box-shadow: var(--shadow);
+  }
+  header h1 { margin: 0; font-size: 24px; }
+  header .sub { opacity: 0.9; font-size: 13px; margin-top: 4px; }
+  nav.tabs {
+    display: flex; gap: 8px; padding: 12px 16px; flex-wrap: wrap;
+    background: var(--peach);
+  }
+  nav.tabs button {
+    border: none; background: var(--card); color: var(--berry);
+    padding: 10px 16px; border-radius: 12px; cursor: pointer;
+    font-weight: 600; font-size: 15px; box-shadow: var(--shadow);
+    transition: transform .15s, background .15s;
+  }
+  nav.tabs button.active { background: var(--berry); color: #fff; }
+  nav.tabs button:hover { transform: translateY(-2px); }
+  main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+  .card {
+    background: var(--card); border-radius: 16px; padding: 16px;
+    box-shadow: var(--shadow); margin-bottom: 16px;
+  }
+  .card h2 { margin: 0 0 12px; color: var(--berry); font-size: 20px; }
+  .card h3 { margin: 12px 0 8px; color: var(--berry); font-size: 16px; }
+  button.primary {
+    background: var(--berry); color: #fff; border: none; padding: 10px 18px;
+    border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 14px;
+  }
+  button.primary:hover { filter: brightness(1.08); }
+  button.ghost {
+    background: transparent; color: var(--berry); border: 2px solid var(--berry);
+    padding: 8px 14px; border-radius: 12px; cursor: pointer; font-weight: 600;
+  }
+  button.danger { background: var(--pink); color: #fff; border: none; padding: 6px 12px; border-radius: 10px; cursor: pointer; }
+  input, textarea, select {
+    width: 100%; padding: 10px 12px; border: 2px solid var(--peach);
+    border-radius: 10px; font-family: inherit; font-size: 14px; background: #fff;
+  }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--berry); }
+  textarea { min-height: 80px; resize: vertical; }
+  label { font-weight: 600; font-size: 13px; color: var(--muted); display: block; margin-bottom: 4px; }
+  .field { margin-bottom: 12px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .row > * { flex: 1; min-width: 120px; }
+  .ing-row { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 8px; align-items: end; margin-bottom: 8px; }
+  .ing-row input, .ing-row select { width: 100%; }
+  .recipe-card {
+    border: 2px solid var(--peach); border-radius: 14px; padding: 14px;
+    margin-bottom: 12px; background: #fffdf7;
+  }
+  .recipe-card h3 { color: var(--berry); margin: 0 0 6px; }
+  .recipe-meta { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+  .badge { display: inline-block; background: var(--peach); color: var(--berry); padding: 2px 8px; border-radius: 8px; font-size: 12px; font-weight: 600; margin-right: 4px; }
+  .thumb { width: 100%; max-height: 220px; object-fit: cover; border-radius: 12px; margin-top: 8px; }
+  .day-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+  @media (max-width: 900px) { .day-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 500px) { .day-grid { grid-template-columns: 1fr; } }
+  .day-col {
+    background: var(--card); border-radius: 14px; padding: 12px; box-shadow: var(--shadow);
+    min-height: 160px;
+  }
+  .day-col h3 { margin: 0 0 8px; color: var(--berry); font-size: 16px; text-align: center; }
+  .day-date { text-align: center; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .planned-item {
+    background: var(--peach); border-radius: 10px; padding: 8px; margin-bottom: 6px;
+    font-size: 13px;
+  }
+  .planned-item .title { font-weight: 600; color: var(--berry); }
+  .planned-item .actions { display: flex; gap: 4px; margin-top: 4px; align-items: center; }
+  .planned-item button { padding: 2px 6px; font-size: 11px; border-radius: 6px; border: none; cursor: pointer; }
+  .nutrition { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; margin-top: 8px; }
+  .nut { background: var(--peach); border-radius: 8px; padding: 6px; text-align: center; font-size: 12px; }
+  .nut b { display: block; color: var(--berry); font-size: 14px; }
+  .shop-item { display: flex; align-items: center; gap: 8px; padding: 8px; border-bottom: 1px solid var(--peach); }
+  .shop-item.checked span { text-decoration: line-through; opacity: 0.5; }
+  .shop-cat { background: var(--berry); color: #fff; padding: 6px 12px; border-radius: 10px; margin: 12px 0 6px; font-weight: 600; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--berry); color: #fff; padding: 10px 18px; border-radius: 12px;
+    box-shadow: var(--shadow); z-index: 1000; display: none;
+  }
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none;
+    align-items: center; justify-content: center; z-index: 900; padding: 16px;
+  }
+  .modal { background: #fff; border-radius: 16px; max-width: 700px; width: 100%; max-height: 90vh; overflow: auto; padding: 20px; }
+  .spinner { display: inline-block; width: 18px; height: 18px; border: 3px solid var(--peach); border-top-color: var(--berry); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .link-box { background: var(--peach); padding: 10px; border-radius: 10px; word-break: break-all; font-size: 12px; }
+  .config-banner { background: #fff3cd; border: 2px solid #ffc107; padding: 12px; border-radius: 12px; margin-bottom: 12px; }
+  .week-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+  .week-nav .label { font-weight: 700; color: var(--berry); font-size: 16px; text-align: center; flex: 1; }
+
+  @media print {
+    nav.tabs, header, .config-banner, button, .week-nav button, input, select, textarea { display: none !important; }
+    body { background: #fff; }
+    .card { box-shadow: none; border: 1px solid #ccc; }
+    .day-grid { grid-template-columns: repeat(7, 1fr); }
+    main { max-width: 100%; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>🍽️ Меню на неделю</h1>
+  <div class="sub" id="headerSub">Составляем меню вместе 💕</div>
+</header>
+<nav class="tabs">
+  <button data-tab="recipes" class="active">📖 Рецепты</button>
+  <button data-tab="plan">📅 План недели</button>
+  <button data-tab="shopping">🛒 Покупки</button>
+  <button data-tab="share">🔗 Поделиться</button>
+</nav>
+<main id="main"></main>
+<div class="toast" id="toast"></div>
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, collection, doc, onSnapshot, setDoc, addDoc, updateDoc, deleteDoc, serverTimestamp, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDjmeqsvv7tIo2u1z0OUsVNUaO9o9aUIok",
+  authDomain: "weekly-food-planner-e99ef.firebaseapp.com",
+  projectId: "weekly-food-planner-e99ef",
+  storageBucket: "weekly-food-planner-e99ef.firebasestorage.app",
+  messagingSenderId: "953784309000",
+  appId: "1:953784309000:web:8d26b135715846b48e48bd"
+};
+const isFirebaseConfigured = () => !FIREBASE_CONFIG.apiKey.startsWith("YOUR_");
+
+const DEFAULT_PLAN = () => ({ mon:[], tue:[], wed:[], thu:[], fri:[], sat:[], sun:[] });
+
+const SEED_RECIPES = [
+  { name: "Омлет с сыром", servings: 2, ingredients: [
+      {name:"яйцо",amount:"4",unit:"шт"}, {name:"молоко",amount:"50",unit:"мл"},
+      {name:"сыр",amount:"50",unit:"г"}, {name:"сливочное масло",amount:"10",unit:"г"},
+      {name:"соль",amount:"1",unit:"щепотка"}],
+    process: "Взбить яйца с молоком, посолить. Обжарить на масле, посыпать сыром, довести до готовности под крышкой." },
+  { name: "Борщ", servings: 4, ingredients: [
+      {name:"говядина",amount:"500",unit:"г"}, {name:"свекла",amount:"2",unit:"шт"},
+      {name:"капуста",amount:"300",unit:"г"}, {name:"картофель",amount:"3",unit:"шт"},
+      {name:"морковь",amount:"1",unit:"шт"}, {name:"лук",amount:"1",unit:"шт"},
+      {name:"томатная паста",amount:"2",unit:"ст.л."}, {name:"сметана",amount:"100",unit:"г"}],
+    process: "Сварить бульон из говядины. Добавить картофель, капусту. Отдельно обжарить лук, морковь и свеклу с томатной пастой, добавить в суп. Варить до готовности. Подавать со сметаной." },
+  { name: "Паста с курицей", servings: 2, ingredients: [
+      {name:"макароны",amount:"200",unit:"г"}, {name:"куриная грудка",amount:"300",unit:"г"},
+      {name:"сливки 20%",amount:"200",unit:"мл"}, {name:"сыр пармезан",amount:"50",unit:"г"},
+      {name:"чеснок",amount:"2",unit:"зубчик"}, {name:"масло оливковое",amount:"2",unit:"ст.л."}],
+    process: "Отварить макароны. Обжарить курицу кусочками, добавить чеснок. Влить сливки, уварить. Смешать с пастой, посыпать пармезаном." },
+  { name: "Греческий салат", servings: 2, ingredients: [
+      {name:"помидор",amount:"2",unit:"шт"}, {name:"огурец",amount:"2",unit:"шт"},
+      {name:"перец болгарский",amount:"1",unit:"шт"}, {name:"сыр фета",amount:"100",unit:"г"},
+      {name:"оливки",amount:"50",unit:"г"}, {name:"масло оливковое",amount:"2",unit:"ст.л."}],
+    process: "Нарезать овощи крупно, добавить фету и оливки. Заправить оливковым маслом." },
+];
+
+
+const state = {
+  firebase: null, db: null, auth: null, user: null,
+  householdId: null,
+  localMode: !isFirebaseConfigured(),
+  recipes: [],
+  plan: DEFAULT_PLAN(),
+  checked: {},
+  weeks: {}, // local cache map weekKey -> {plan,checked}
+  weekStart: null,
+  weekKey: null,
+  tab: 'recipes',
+  loading: true,
+  pwHash: null,
+  pwVerified: true,
+  editingRecipe: null,
+  showRecipeForm: false,
+  addRecipeToDay: null,
+  search: '',
+  unsubRecipes: null,
+  unsubWeek: null,
+};
+
+const DAYS = [
+  { key:'mon', name:'Понедельник', emoji:'🌙' },
+  { key:'tue', name:'Вторник', emoji:'⭐' },
+  { key:'wed', name:'Среда', emoji:'🌸' },
+  { key:'thu', name:'Четверг', emoji:'🍀' },
+  { key:'fri', name:'Пятница', emoji:'🎉' },
+  { key:'sat', name:'Суббота', emoji:'☀️' },
+  { key:'sun', name:'Воскресенье', emoji:'💖' },
+];
+const UNITS = ['г','кг','мл','л','шт','ст.л.','ч.л.','щепотка','по вкусу'];
+const PIECE_WEIGHTS = {
+  'яйцо':60,'яйца':60,'яйц':60,
+  'помидор':120,'томат':120,
+  'огурец':100,'огурчик':100,
+  'картофель':150,'картошка':150,'картофелина':150,
+  'лук':80,'луковица':80,
+  'морковь':80,'морковка':80,
+  'яблоко':150,'груша':150,
+  'банан':120,'лимон':100,'апельсин':200,
+  'перец':150,
+  'зубчик чеснока':5,'чеснок зубчик':5,
+};
+
+// category groups for shopping
+const SHOP_CATS = [
+  { name:'🥬 Овощи', keys:['картофель','картошка','морковь','морковка','лук','чеснок','помидор','томат','огурец','перец','капуста','брокколи','цветная','кабачок','цуккини','баклажан','тыква','свекла','редис','шпинат','салат','руккола','зелень','петрушка','укроп','имбирь','авокадо','кукуруза','горошек','оливки','маслины'] },
+  { name:'🍎 Фрукты/ягоды', keys:['яблоко','груша','банан','апельсин','лимон','мандарин','виноград','клубника','малина','черника','вишня','персик','ананас','киви','арбуз','дыня'] },
+  { name:'🥩 Мясо/птица', keys:['куриц','говядин','свинин','баранин','индейк','фарш','бекон','колбас','сосиск','ветчин','котлет','тефтел','голубц'] },
+  { name:'🐟 Рыба/морепродукты', keys:['лосось','семга','форель','тунец','треска','минтай','сельдь','скумбрия','горбуша','кальмар','креветк','мидии'] },
+  { name:'🥛 Молочное/яйца', keys:['молоко','сливки','масло сливочное','сметана','творог','йогурт','кефир','сыр','яйц','майонез'] },
+  { name:'🌾 Бакалея/крупы', keys:['рис','гречка','овсян','овсяные','перлов','пшено','булгур','кускус','манка','макарон','спагетти','лапша','вермишель','мука','сахар','хлеб','батон','лаваш','тортилья','панировоч','фасоль','нут','чечевиц','горох','тофу'] },
+  { name:'🫒 Масла/соусы', keys:['масло растительное','масло оливковое','масло подсолнечное','масло кокосовое','кетчуп','томатная паста','томатный соус','соевый соус','уксус','горчица','мед','шоколад','какао','ванилин','разрыхлитель','дрожжи','желатин','крахмал'] },
+  { name:'🧂 Прочее', keys:[] },
+];
+function categoryOf(name){
+  const n = normName(name);
+  for(const c of SHOP_CATS){
+    if(c.keys.some(k => n.includes(k) || k.includes(n))) return c.name;
+  }
+  return '🧂 Прочее';
+}
+
+const NUTDB = {
+  'курица':{k:165,p:18.6,f:9.4,c:0},
+  'куриная грудка':{k:113,p:23.6,f:1.9,c:0},
+  'куриное бедро':{k:185,p:17.5,f:12.7,c:0},
+  'куриное филе':{k:113,p:23.6,f:1.9,c:0},
+  'говядина':{k:218,p:18.9,f:15.6,c:0},
+  'свинина':{k:259,p:16,f:21.6,c:0},
+  'баранина':{k:209,p:15.6,f:16.3,c:0},
+  'индейка':{k:135,p:21.6,f:4.6,c:0},
+  'фарш говяжий':{k:214,p:17.2,f:15.7,c:0},
+  'фарш свиной':{k:350,p:14.3,f:32.2,c:0},
+  'фарш куриный':{k:143,p:17.4,f:8.2,c:0},
+  'фарш смешанный':{k:260,p:15,f:22,c:0},
+  'бекон':{k:541,p:13.5,f:54.3,c:0},
+  'колбаса':{k:300,p:12,f:27,c:2},
+  'сосиски':{k:270,p:11,f:24,c:2},
+  'ветчина':{k:279,p:14.5,f:24.2,c:0.5},
+  'лосось':{k:208,p:20.5,f:13.8,c:0},
+  'семга':{k:208,p:20.5,f:13.8,c:0},
+  'форель':{k:147,p:20.8,f:7.2,c:0},
+  'тунец':{k:139,p:23.4,f:4.9,c:0},
+  'треска':{k:78,p:17.7,f:0.7,c:0},
+  'минтай':{k:72,p:15.9,f:1,c:0},
+  'сельдь':{k:217,p:18,f:15.5,c:0},
+  'скумбрия':{k:205,p:18,f:14.5,c:0},
+  'горбуша':{k:140,p:20.5,f:6.5,c:0},
+  'кальмар':{k:92,p:18,f:2.2,c:0},
+  'креветки':{k:99,p:20.9,f:1.3,c:0},
+  'мидии':{k:77,p:11.5,f:2,c:0},
+  'молоко':{k:52,p:2.9,f:2.5,c:4.7},
+  'молоко 3.2%':{k:59,p:2.9,f:3.2,c:4.7},
+  'сливки':{k:206,p:2.5,f:20,c:3.4},
+  'сливки 10%':{k:118,p:2.7,f:10,c:4},
+  'сливки 20%':{k:206,p:2.5,f:20,c:3.4},
+  'сливочное масло':{k:748,p:0.5,f:82.5,c:0.8},
+  'масло сливочное':{k:748,p:0.5,f:82.5,c:0.8},
+  'сметана':{k:206,p:2.6,f:20,c:3.2},
+  'сметана 15%':{k:158,p:2.6,f:15,c:3.2},
+  'сметана 20%':{k:206,p:2.6,f:20,c:3.2},
+  'творог':{k:121,p:16.7,f:5.2,c:1.8},
+  'творог 5%':{k:121,p:16.7,f:5.2,c:1.8},
+  'творог обезжиренный':{k:80,p:18,f:0.6,c:1.8},
+  'йогурт':{k:60,p:3,f:3.2,c:4.1},
+  'кефир':{k:40,p:3,f:1,c:4},
+  'сыр':{k:350,p:23,f:28,c:0},
+  'сыр твердый':{k:350,p:23,f:28,c:0},
+  'сыр моцарелла':{k:280,p:18,f:22,c:2.2},
+  'сыр пармезан':{k:392,p:36,f:26,c:3.2},
+  'сыр фета':{k:264,p:14.2,f:21.3,c:4.1},
+  'сыр плавленый':{k:289,p:9,f:25,c:6},
+  'яйцо':{k:157,p:12.7,f:11.5,c:0.7},
+  'яйца':{k:157,p:12.7,f:11.5,c:0.7},
+  'рис':{k:344,p:6.7,f:0.7,c:78.9},
+  'рис белый':{k:344,p:6.7,f:0.7,c:78.9},
+  'рис бурый':{k:337,p:7.4,f:1.8,c:72.9},
+  'гречка':{k:313,p:12.6,f:3.3,c:62.1},
+  'овсянка':{k:342,p:11.9,f:6.1,c:59.5},
+  'овсяные хлопья':{k:342,p:11.9,f:6.1,c:59.5},
+  'перловка':{k:315,p:9.3,f:1.1,c:66.9},
+  'пшено':{k:348,p:11.5,f:3.3,c:69.3},
+  'булгур':{k:342,p:12.3,f:1.3,c:63.4},
+  'кускус':{k:376,p:12.8,f:0.6,c:77.4},
+  'манка':{k:328,p:10.3,f:1,c:70.6},
+  'макароны':{k:344,p:10.4,f:1.1,c:71.5},
+  'спагетти':{k:344,p:10.4,f:1.1,c:71.5},
+  'лапша':{k:344,p:10.4,f:1.1,c:71.5},
+  'лапша рисовая':{k:364,p:6.9,f:0.6,c:83.5},
+  'вермишель':{k:344,p:10.4,f:1.1,c:71.5},
+  'мука':{k:334,p:10.3,f:1.1,c:70.6},
+  'мука пшеничная':{k:334,p:10.3,f:1.1,c:70.6},
+  'мука ржаная':{k:325,p:8.9,f:1.3,c:70.5},
+  'сахар':{k:398,p:0,f:0,c:99.8},
+  'сахарная пудра':{k:398,p:0,f:0,c:99.8},
+  'мед':{k:328,p:0.8,f:0,c:81.5},
+  'хлеб':{k:265,p:7.6,f:3.3,c:49.2},
+  'хлеб белый':{k:265,p:7.6,f:3.3,c:49.2},
+  'хлеб черный':{k:214,p:6.6,f:1.3,c:43.5},
+  'хлеб ржаной':{k:214,p:6.6,f:1.3,c:43.5},
+  'батон':{k:265,p:7.6,f:3.3,c:49.2},
+  'лаваш':{k:277,p:8.1,f:1,c:58.4},
+  'тортилья':{k:312,p:8.2,f:8.4,c:49.2},
+  'панировочные сухари':{k:347,p:11.3,f:1.5,c:72.2},
+  'картофель':{k:77,p:2,f:0.4,c:16.3},
+  'картошка':{k:77,p:2,f:0.4,c:16.3},
+  'морковь':{k:35,p:1.3,f:0.1,c:6.9},
+  'лук':{k:40,p:1.4,f:0.2,c:8.2},
+  'лук репчатый':{k:40,p:1.4,f:0.2,c:8.2},
+  'чеснок':{k:149,p:6.5,f:0.5,c:29.9},
+  'помидор':{k:20,p:0.6,f:0.2,c:4.2},
+  'томат':{k:20,p:0.6,f:0.2,c:4.2},
+  'томаты':{k:20,p:0.6,f:0.2,c:4.2},
+  'огурец':{k:15,p:0.8,f:0.1,c:2.8},
+  'перец болгарский':{k:27,p:1.3,f:0.1,c:5.3},
+  'перец сладкий':{k:27,p:1.3,f:0.1,c:5.3},
+  'капуста':{k:27,p:1.8,f:0.1,c:4.7},
+  'капуста белокочанная':{k:27,p:1.8,f:0.1,c:4.7},
+  'капуста пекинская':{k:16,p:1.2,f:0.2,c:2.0},
+  'брокколи':{k:34,p:2.8,f:0.4,c:6.6},
+  'цветная капуста':{k:30,p:2.5,f:0.3,c:5.4},
+  'кабачок':{k:24,p:0.6,f:0.3,c:4.6},
+  'цуккини':{k:24,p:0.6,f:0.3,c:4.6},
+  'баклажан':{k:24,p:1.2,f:0.1,c:4.5},
+  'тыква':{k:22,p:1,f:0.1,c:4.4},
+  'свекла':{k:43,p:1.7,f:0.1,c:8.8},
+  'редис':{k:19,p:1.2,f:0.1,c:3.4},
+  'шпинат':{k:23,p:2.9,f:0.3,c:2.0},
+  'салат':{k:14,p:1.2,f:0.2,c:2.2},
+  'руккола':{k:25,p:2.6,f:0.7,c:3.7},
+  'зелень':{k:40,p:3,f:0.5,c:6},
+  'петрушка':{k:47,p:3.7,f:0.4,c:7.6},
+  'укроп':{k:38,p:2.5,f:0.5,c:6.3},
+  'зеленый лук':{k:20,p:1.3,f:0.1,c:4.6},
+  'лук зеленый':{k:20,p:1.3,f:0.1,c:4.6},
+  'имбирь':{k:80,p:1.8,f:0.8,c:17.8},
+  'авокадо':{k:167,p:2,f:15.3,c:1.8},
+  'кукуруза':{k:86,p:3.2,f:1.2,c:19.0},
+  'горошек зеленый':{k:73,p:5.0,f:0.2,c:13.3},
+  'фасоль стручковая':{k:31,p:1.8,f:0.1,c:7.1},
+  'оливки':{k:115,p:0.8,f:10.7,c:6.3},
+  'маслины':{k:115,p:0.8,f:10.7,c:6.3},
+  'фасоль':{k:333,p:21,f:2,c:47},
+  'фасоль красная':{k:333,p:21,f:2,c:47},
+  'нут':{k:364,p:19,f:6,c:61},
+  'чечевица':{k:352,p:24,f:1.5,c:53.7},
+  'горох':{k:298,p:20.5,f:2.4,c:49.5},
+  'тофу':{k:76,p:8,f:4.8,c:1.9},
+  'яблоко':{k:47,p:0.4,f:0.4,c:9.8},
+  'груша':{k:42,p:0.4,f:0.3,c:10.9},
+  'банан':{k:96,p:1.5,f:0.5,c:21.8},
+  'апельсин':{k:43,p:0.9,f:0.2,c:8.4},
+  'лимон':{k:34,p:0.9,f:0.1,c:3.0},
+  'мандарин':{k:38,p:0.8,f:0.2,c:7.5},
+  'виноград':{k:65,p:0.6,f:0.2,c:15.4},
+  'клубника':{k:32,p:0.8,f:0.4,c:7.5},
+  'малина':{k:46,p:0.8,f:0.5,c:8.3},
+  'черника':{k:57,p:1.1,f:0.3,c:14.5},
+  'вишня':{k:52,p:0.8,f:0.5,c:10.6},
+  'персик':{k:46,p:0.9,f:0.1,c:11.3},
+  'ананас':{k:49,p:0.4,f:0.1,c:11.8},
+  'киви':{k:47,p:0.8,f:0.4,c:10.3},
+  'арбуз':{k:38,p:0.6,f:0.1,c:8.8},
+  'дыня':{k:35,p:0.6,f:0.3,c:7.4},
+  'грецкий орех':{k:654,p:15.2,f:65.2,c:7.0},
+  'миндаль':{k:579,p:21.2,f:49.9,c:21.7},
+  'арахис':{k:567,p:25.8,f:49.2,c:16.1},
+  'кешью':{k:553,p:18.2,f:43.9,c:30.2},
+  'фундук':{k:628,p:15,f:60.8,c:16.7},
+  'семена подсолнечника':{k:584,p:20.8,f:51.5,c:20.0},
+  'семена льна':{k:534,p:18.3,f:42.2,c:28.9},
+  'семена чиа':{k:486,p:16.5,f:30.7,c:42.1},
+  'кунжут':{k:573,p:17.7,f:49.7,c:23.4},
+  'кокос':{k:354,p:3.3,f:33.5,c:15.2},
+  'масло растительное':{k:899,p:0,f:99.9,c:0},
+  'масло оливковое':{k:898,p:0,f:99.9,c:0},
+  'масло подсолнечное':{k:899,p:0,f:99.9,c:0},
+  'масло кокосовое':{k:899,p:0,f:99.9,c:0},
+  'майонез':{k:624,p:2.8,f:67,c:3.9},
+  'кетчуп':{k:100,p:1.2,f:0.1,c:22.2},
+  'томатная паста':{k:99,p:4.8,f:0.2,c:19},
+  'томатный соус':{k:60,p:2,f:0.5,c:12},
+  'соевый соус':{k:53,p:5.6,f:0,c:4.9},
+  'уксус':{k:18,p:0,f:0,c:0.03},
+  'горчица':{k:162,p:5.7,f:6.4,c:22.0},
+  'вода':{k:0,p:0,f:0,c:0},
+  'бульон':{k:15,p:2,f:0.5,c:1},
+  'бульон куриный':{k:15,p:2,f:0.5,c:1},
+  'бульон говяжий':{k:20,p:2.5,f:0.8,c:1},
+  'кофе':{k:2,p:0.1,f:0,c:0.3},
+  'чай':{k:1,p:0,f:0,c:0.2},
+  'вино белое':{k:66,p:0.1,f:0,c:0.6},
+  'вино красное':{k:74,p:0.2,f:0,c:2.3},
+  'пиво':{k:43,p:0.5,f:0,c:3.6},
+  'шоколад':{k:546,p:6.9,f:35.3,c:48.2},
+  'шоколад черный':{k:546,p:6.9,f:35.3,c:48.2},
+  'какао':{k:228,p:19.6,f:13.7,c:57.9},
+  'какао-порошок':{k:228,p:19.6,f:13.7,c:57.9},
+  'ванилин':{k:288,p:0,f:0,c:12.6},
+  'разрыхлитель':{k:50,p:0,f:0,c:27},
+  'дрожжи':{k:105,p:10.5,f:1.8,c:11.4},
+  'желатин':{k:355,p:87.2,f:0.1,c:0},
+  'крахмал':{k:337,p:0.6,f:0.1,c:83.5},
+  'крахмал картофельный':{k:337,p:0.6,f:0.1,c:83.5},
+  'крахмал кукурузный':{k:381,p:0.3,f:0.1,c:91.3},
+};
+
+function normName(s){ return (s||'').toLowerCase().trim().replace(/[.,!?;:]/g,''); }
+function findNutrition(name){
+  const n = normName(name);
+  if(NUTDB[n]) return NUTDB[n];
+  let best=null;
+  for(const key in NUTDB){
+    if(n.includes(key) || key.includes(n)){ best=NUTDB[key]; break; }
+  }
+  if(best) return best;
+  const first = n.split(/\s+/)[0];
+  if(NUTDB[first]) return NUTDB[first];
+  for(const key in NUTDB){
+    if(key.startsWith(first) || first.startsWith(key.split(/\s+/)[0])){ return NUTDB[key]; }
+  }
+  return null;
+}
+function unitToGrams(amount, unit, name){
+  const a = parseFloat(amount) || 0;
+  if(!a) return 0;
+  const u = (unit||'г').toLowerCase();
+  if(u==='г'||u==='g') return a;
+  if(u==='кг'||u==='kg') return a*1000;
+  if(u==='мл'||u==='ml') return a;
+  if(u==='л'||u==='l') return a*1000;
+  if(u==='ст.л.'||u==='ст ложка'||u==='tbsp') return a*15;
+  if(u==='ч.л.'||u==='tsp') return a*5;
+  if(u==='щепотка') return a*2;
+  if(u==='по вкусу') return 0;
+  if(u==='шт'){
+    const nm = normName(name);
+    let w = 100;
+    for(const k in PIECE_WEIGHTS){ if(nm.includes(k)){ w = PIECE_WEIGHTS[k]; break; } }
+    return a*w;
+  }
+  return a;
+}
+async function searchOFF(name){
+  try {
+    const url = 'https://ru.openfoodfacts.org/cgi/search.pl?search_terms=' + encodeURIComponent(name) + '&search_simple=1&action=process&json=1&page_size=3';
+    const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+    const data = await res.json();
+    const p = (data.products||[])[0];
+    if(!p) return null;
+    const n = p.nutriments || {};
+    const kcal = n['energy-kcal_100g'] ?? (n['energy_100g']? n['energy_100g']/4.184 : null);
+    return {
+      k: kcal!=null? +kcal.toFixed(1) : 0,
+      p: +(n.proteins_100g||0).toFixed(1),
+      f: +(n.fat_100g||0).toFixed(1),
+      c: +(n.carbohydrates_100g||0).toFixed(1),
+    };
+  } catch(e){ return null; }
+}
+async function calcRecipeNutrition(ingredients){
+  let totalG = 0, kcal=0, p=0, f=0, c=0;
+  for(const ing of ingredients){
+    const g = unitToGrams(ing.amount, ing.unit, ing.name);
+    totalG += g;
+    let nut = findNutrition(ing.name);
+    if(!nut) nut = await searchOFF(ing.name);
+    if(nut && g>0){
+      const factor = g/100;
+      kcal += nut.k*factor; p += nut.p*factor; f += nut.f*factor; c += nut.c*factor;
+    }
+  }
+  return {
+    totalGrams: Math.round(totalG),
+    kcal: Math.round(kcal),
+    protein: +p.toFixed(1),
+    fat: +f.toFixed(1),
+    carbs: +c.toFixed(1),
+  };
+}
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.display='block';
+  clearTimeout(t._t); t._t = setTimeout(()=> t.style.display='none', 2500);
+}
+function escapeHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function uid(){ return 'r_' + Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
+async function verifyPassword(){
+  const input = document.getElementById('pwInput').value;
+  const h = await hashPassword(input);
+  if(h === state.pwHash){
+    state.pwVerified = true;
+    localStorage.setItem('menuapp_pw_' + state.householdId, h);
+    render();
+    toast('✅ Доступ открыт');
+  } else {
+    toast('❌ Неверный пароль');
+  }
+}
+function getMonday(d){
+  const date = new Date(d); const day = date.getDay();
+  const diff = (day===0 ? -6 : 1-day);
+  date.setDate(date.getDate()+diff); date.setHours(0,0,0,0);
+  return date;
+}
+function fmtDate(d){ return d.toLocaleDateString('ru-RU', {day:'numeric', month:'short'}); }
+function weekKeyOf(date){ const m = getMonday(date); return m.toISOString().slice(0,10); }
+function addDays(date,n){ const d=new Date(date); d.setDate(d.getDate()+n); return d; }
+function compressImage(file, maxDim=700, quality=0.7){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        let w=img.width, h=img.height;
+        if(w>maxDim||h>maxDim){ if(w>h){h=Math.round(h*maxDim/w);w=maxDim;} else {w=Math.round(w*maxDim/h);h=maxDim;} }
+        const canvas = document.createElement('canvas'); canvas.width=w; canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ===== LOCAL STORAGE LAYER =====
+function defaultPlan(){ return { mon:[], tue:[], wed:[], thu:[], fri:[], sat:[], sun:[] }; }
+function loadLocal(){
+  try {
+    const raw = localStorage.getItem('menuapp_' + state.householdId);
+    if(raw){
+      const d = JSON.parse(raw);
+      state.recipes = d.recipes||[];
+      state.weeks = d.weeks||{};
+      if(d.plan && !d.weeks){ state.weeks[state.weekKey] = { plan: d.plan, checked: d.checked||{} }; }
+    }
+  } catch(e){}
+  // ensure current week
+  if(!state.weeks[state.weekKey]) state.weeks[state.weekKey] = { plan: defaultPlan(), checked: {} };
+  state.plan = state.weeks[state.weekKey].plan || defaultPlan();
+  state.checked = state.weeks[state.weekKey].checked || {};
+}
+function saveLocal(){
+  state.weeks[state.weekKey] = { plan: state.plan, checked: state.checked };
+  localStorage.setItem('menuapp_' + state.householdId, JSON.stringify({ recipes: state.recipes, weeks: state.weeks }));
+}
+
+async function hashPassword(pw){
+  const enc = new TextEncoder().encode(pw);
+  const buf = await crypto.subtle.digest('SHA-256', enc);
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+// ===== FIREBASE LAYER =====
+async function initFirebase(){
+  if(!isFirebaseConfigured()){ state.localMode = true; return; }
+  try {
+    const app = initializeApp(FIREBASE_CONFIG);
+    state.firebase = app;
+    state.db = getFirestore(app);
+    state.auth = getAuth(app);
+    await new Promise((resolve, reject)=>{
+      const unsub = onAuthStateChanged(state.auth, (u)=>{
+        if(u){ state.user = u; unsub(); resolve(); }
+      }, reject);
+      signInAnonymously(state.auth).catch(reject);
+    });
+  } catch(e){
+    console.error(e);
+    state.localMode = true;
+    toast('Firebase недоступен, работаем локально');
+  }
+}
+function weekDoc(key){ return doc(state.db, 'households', state.householdId, 'weeks', key); }
+function recipesCol(){ return collection(state.db, 'households', state.householdId, 'recipes'); }
+function householdRef(){ return doc(state.db, 'households', state.householdId); }
+
+async function ensureHouseholdDoc(){
+  await setDoc(householdRef(), { createdAt: serverTimestamp() }, { merge: true });
+}
+
+function subscribeRecipes(){
+  if(state.unsubRecipes) state.unsubRecipes();
+  state.unsubRecipes = onSnapshot(recipesCol(), (snap)=>{
+    state.recipes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    state.recipes.sort((a,b)=> (b.createdAt?.toMillis?.()||0) - (a.createdAt?.toMillis?.()||0));
+    render();
+  });
+}
+function subscribeWeek(key){
+  if(state.unsubWeek) state.unsubWeek();
+  state.unsubWeek = onSnapshot(weekDoc(key), (snap)=>{
+    if(snap.exists()){
+      const d = snap.data();
+      state.plan = d.plan || defaultPlan();
+      state.checked = d.checked || {};
+    } else {
+      state.plan = defaultPlan();
+      state.checked = {};
+      setDoc(weekDoc(key), { plan: state.plan, checked: {} });
+    }
+    render();
+  });
+}
+
+async function fbAddRecipe(data){
+  const ref = await addDoc(recipesCol(), { ...data, createdAt: serverTimestamp() });
+  return ref.id;
+}
+async function fbUpdateRecipe(id, data){
+  await updateDoc(doc(state.db,'households',state.householdId,'recipes',id), data);
+}
+async function fbDeleteRecipe(id){
+  await deleteDoc(doc(state.db,'households',state.householdId,'recipes',id));
+}
+async function fbSaveWeek(){
+  await setDoc(weekDoc(state.weekKey), { plan: state.plan, checked: state.checked }, { merge: true });
+}
+
+// ===== ABSTRACT DATA API =====
+async function addRecipe(data){
+  const nut = await calcRecipeNutrition(data.ingredients);
+  if(data.manualNutrition){
+    const m = data.manualNutrition;
+    if(m.kcal!=null) nut.kcal = m.kcal;
+    if(m.protein!=null) nut.protein = m.protein;
+    if(m.fat!=null) nut.fat = m.fat;
+    if(m.carbs!=null) nut.carbs = m.carbs;
+    if(m.totalGrams!=null) nut.totalGrams = m.totalGrams;
+  }
+  const payload = { ...data, nutrition: nut };
+  delete payload.manualNutrition;
+  if(state.localMode){
+    const r = { id: uid(), ...payload, createdAt: Date.now() };
+    state.recipes.unshift(r);
+    saveLocal(); render();
+    return r.id;
+  } else {
+    return await fbAddRecipe(payload);
+  }
+}
+async function updateRecipe(id, data){
+  const nut = await calcRecipeNutrition(data.ingredients);
+  if(data.manualNutrition){
+    const m = data.manualNutrition;
+    if(m.kcal!=null) nut.kcal = m.kcal;
+    if(m.protein!=null) nut.protein = m.protein;
+    if(m.fat!=null) nut.fat = m.fat;
+    if(m.carbs!=null) nut.carbs = m.carbs;
+    if(m.totalGrams!=null) nut.totalGrams = m.totalGrams;
+  }
+  const payload = { ...data, nutrition: nut };
+  delete payload.manualNutrition;
+  if(state.localMode){
+    const idx = state.recipes.findIndex(r=>r.id===id);
+    if(idx>=0){ state.recipes[idx] = { ...state.recipes[idx], ...payload }; saveLocal(); render(); }
+  } else {
+    await fbUpdateRecipe(id, payload);
+  }
+}
+async function deleteRecipe(id){
+  if(!confirm('Удалить рецепт?')) return;
+  if(state.localMode){
+    state.recipes = state.recipes.filter(r=>r.id!==id);
+    for(const k in state.plan){ state.plan[k] = state.plan[k].filter(x=>x.recipeId!==id); }
+    saveLocal(); render();
+  } else {
+    await fbDeleteRecipe(id);
+  }
+  toast('🗑️ Удалено');
+}
+function savePlan(){
+  if(state.localMode){ saveLocal(); render(); }
+  else { fbSaveWeek(); }
+}
+
+// ===== HOUSEHOLD RESOLUTION =====
+function resolveHousehold(){
+  const params = new URLSearchParams(location.search);
+  let h = params.get('h') || params.get('household');
+  if(!h){ h = localStorage.getItem('menuapp_household'); }
+  if(!h){ h = 'hh_' + Math.random().toString(36).slice(2,10); }
+  state.householdId = h;
+  localStorage.setItem('menuapp_household', h);
+  if(!params.get('h')){
+    const u = new URL(location.href);
+    u.searchParams.set('h', h);
+    history.replaceState({}, '', u.toString());
+  }
+}
+
+// ===== RENDER =====
+function render(){
+  const main = document.getElementById('main');
+  if(state.loading){
+    main.innerHTML = '<div class="card" style="text-align:center"><span class="spinner"></span> Загрузка...</div>';
+    return;
+  }
+  if(!state.localMode && state.pwHash && !state.pwVerified){
+    main.innerHTML = `<div class="card" style="max-width:400px;margin:40px auto;text-align:center">
+      <h2>🔒 Введите пароль семьи</h2>
+      <div class="field"><input id="pwInput" type="password" placeholder="Пароль"></div>
+      <button class="primary" id="pwBtn">Войти</button>
+      <p class="muted" style="margin-top:10px">Пароль задаётся в настройках (вкладка «Поделиться»).</p>
+    </div>`;
+    document.getElementById('pwBtn')?.addEventListener('click', verifyPassword);
+    document.getElementById('pwInput')?.addEventListener('keydown', (e)=>{ if(e.key==='Enter') verifyPassword(); });
+    return;
+  }
+  if(state.tab==='recipes') renderRecipes(main);
+  else if(state.tab==='plan') renderPlan(main);
+  else if(state.tab==='shopping') renderShopping(main);
+  else if(state.tab==='share') renderShare(main);
+}
+
+function renderRecipes(main){
+  const q = state.search.trim().toLowerCase();
+  const filtered = q ? state.recipes.filter(r => r.name.toLowerCase().includes(q) || (r.ingredients||[]).some(i=>i.name.toLowerCase().includes(q))) : state.recipes;
+
+  let html = '';
+  if(state.localMode){
+    html += `<div class="config-banner">⚠️ <b>Локальный режим.</b> Данные хранятся только в этом браузере. Чтобы делиться с женой, настрой Firebase (вкладка «Поделиться»).</div>`;
+  }
+  html += `<div class="card">
+    <div class="row" style="align-items:center">
+      <input id="searchInput" placeholder="🔍 Поиск рецептов..." value="${escapeHtml(state.search)}">
+      <button class="primary" id="addRecipeBtn">➕ Новый рецепт</button>
+    </div>
+  </div>`;
+
+  if(state.showRecipeForm) html += renderRecipeForm();
+
+  if(filtered.length===0){
+    html += `<div class="card" style="text-align:center">Пока нет рецептов. Добавь первый! 🍳</div>`;
+  }
+  for(const r of filtered) html += renderRecipeCard(r);
+  main.innerHTML = html;
+  bindRecipesEvents();
+}
+
+function renderRecipeForm(){
+  const r = state.editingRecipe ? state.recipes.find(x=>x.id===state.editingRecipe) : null;
+  const ingredients = r?.ingredients?.length ? r.ingredients : [{name:'',amount:'',unit:'г'}];
+  const ingHtml = ingredients.map((ing,idx)=>`
+    <div class="ing-row" data-idx="${idx}">
+      <div><label>Ингредиент</label><input class="ing-name" value="${escapeHtml(ing.name)}" placeholder="Напр. куриная грудка"></div>
+      <div><label>Кол-во</label><input class="ing-amount" type="number" step="0.1" value="${ing.amount||''}"></div>
+      <div><label>Ед.</label><select class="ing-unit">${UNITS.map(u=>`<option ${u===ing.unit?'selected':''}>${u}</option>`).join('')}</select></div>
+      <button class="danger" type="button" data-action="remove-ing" data-idx="${idx}">✕</button>
+    </div>
+  `).join('');
+  return `<div class="card">
+    <h2>${r?'✏️ Редактировать рецепт':'➕ Новый рецепт'}</h2>
+    <div class="field"><label>Название *</label><input id="rf-name" value="${escapeHtml(r?.name||'')}" placeholder="Напр. Борщ"></div>
+    <div class="field"><label>Количество порций</label><input id="rf-servings" type="number" min="1" value="${r?.servings||2}"></div>
+    <div class="field"><label>Ингредиенты *</label>
+      <div id="ingContainer">${ingHtml}</div>
+      <button type="button" class="ghost" id="addIngBtn" style="margin-top:6px">➕ Добавить ингредиент</button>
+    </div>
+    <div class="field"><label>Процесс приготовления</label><textarea id="rf-process" placeholder="Шаги приготовления...">${escapeHtml(r?.process||'')}</textarea></div>
+    <div class="field"><label>Ссылка на источник (YouTube/Instagram/Telegram)</label><input id="rf-source" value="${escapeHtml(r?.sourceUrl||'')}" placeholder="https://..."></div>
+    <details style="margin-bottom:12px">
+      <summary style="cursor:pointer;font-weight:600;color:var(--berry)">📊 КБЖУ (авто, можно поправить)</summary>
+      <div class="row" style="margin-top:8px">
+        <div><label>ккал (всего)</label><input id="rf-kcal" type="number" step="1" value="${r?.nutrition?.kcal??''}"></div>
+        <div><label>Белки</label><input id="rf-protein" type="number" step="0.1" value="${r?.nutrition?.protein??''}"></div>
+        <div><label>Жиры</label><input id="rf-fat" type="number" step="0.1" value="${r?.nutrition?.fat??''}"></div>
+        <div><label>Углеводы</label><input id="rf-carbs" type="number" step="0.1" value="${r?.nutrition?.carbs??''}"></div>
+        <div><label>Граммы (всего)</label><input id="rf-grams" type="number" step="1" value="${r?.nutrition?.totalGrams??''}"></div>
+      </div>
+      <div class="muted" style="margin-top:6px">Оставь пустым — посчитается автоматически.</div>
+    </details>
+    <div class="field"><label>Скриншот рецепта (файл)</label><input id="rf-screenshot" type="file" accept="image/*"></div>
+    ${r?.screenshot? `<img src="${r.screenshot}" class="thumb" style="max-height:120px">` : ''}
+    <div class="field"><label>Фото готового блюда (файл)</label><input id="rf-photo" type="file" accept="image/*"></div>
+    ${r?.photo? `<img src="${r.photo}" class="thumb" style="max-height:120px">` : ''}
+    <div class="row" style="margin-top:12px">
+      <button class="primary" id="saveRecipeBtn">💾 Сохранить</button>
+      <button class="ghost" id="cancelRecipeBtn">Отмена</button>
+    </div>
+    <div class="muted" style="margin-top:8px">Калории и БЖУ посчитаются автоматически по ингредиентам (встроенная база + Open Food Facts).</div>
+  </div>`;
+}
+
+function renderRecipeCard(r){
+  const n = r.nutrition || {};
+  const perServ = r.servings ? {
+    kcal: Math.round((n.kcal||0)/(r.servings)),
+    p: +((n.protein||0)/r.servings).toFixed(1),
+    f: +((n.fat||0)/r.servings).toFixed(1),
+    c: +((n.carbs||0)/r.servings).toFixed(1),
+    g: Math.round((n.totalGrams||0)/r.servings),
+  } : null;
+  let html = `<div class="recipe-card">
+    <h3>${escapeHtml(r.name)}</h3>
+    <div class="recipe-meta">
+      <span class="badge">🍽️ ${r.servings||1} порц.</span>
+      ${r.sourceUrl? `<a href="${escapeHtml(r.sourceUrl)}" target="_blank" rel="noopener">🔗 источник</a>` : ''}
+    </div>
+    ${r.photo? `<img src="${r.photo}" class="thumb">` : ''}
+    <details style="margin-top:8px"><summary>Ингредиенты (${(r.ingredients||[]).length})</summary>
+      <ul style="margin:6px 0;padding-left:18px;font-size:13px">
+        ${(r.ingredients||[]).map(i=>`<li>${escapeHtml(i.name)} — ${i.amount} ${escapeHtml(i.unit)}</li>`).join('')}
+      </ul>
+    </details>
+    ${r.process? `<details><summary>Процесс</summary><p style="white-space:pre-wrap;font-size:13px">${escapeHtml(r.process)}</p></details>` : ''}
+    ${r.screenshot? `<details><summary>Скриншот рецепта</summary><img src="${r.screenshot}" class="thumb"></details>` : ''}
+    <div class="nutrition">
+      <div class="nut"><b>${n.kcal||0}</b>ккал (всего)</div>
+      <div class="nut"><b>${n.protein||0}</b>белки</div>
+      <div class="nut"><b>${n.fat||0}</b>жиры</div>
+      <div class="nut"><b>${n.carbs||0}</b>углеводы</div>
+    </div>
+    <div class="muted" style="margin-top:4px">Всего ${n.totalGrams||0} г ${perServ? `• 1 порция: ${perServ.kcal} ккал, ${perServ.p}/${perServ.f}/${perServ.c} БЖУ, ${perServ.g} г` : ''}</div>
+    <div class="row" style="margin-top:10px">
+      <button class="ghost" data-action="edit-recipe" data-id="${r.id}">✏️ Изменить</button>
+      <button class="danger" data-action="delete-recipe" data-id="${r.id}">🗑️</button>
+      <button class="primary" data-action="add-to-plan" data-id="${r.id}">📅 В план</button>
+    </div>
+  </div>`;
+  return html;
+}
+
+function bindRecipesEvents(){
+  document.getElementById('searchInput')?.addEventListener('input', (e)=>{ state.search = e.target.value; render(); });
+  document.getElementById('addRecipeBtn')?.addEventListener('click', ()=>{ state.showRecipeForm = !state.showRecipeForm; state.editingRecipe = null; render(); });
+  document.getElementById('addIngBtn')?.addEventListener('click', ()=>{
+    const container = document.getElementById('ingContainer');
+    const idx = container.children.length;
+    const div = document.createElement('div');
+    div.className='ing-row'; div.dataset.idx=idx;
+    div.innerHTML = `<div><label>Ингредиент</label><input class="ing-name" placeholder="Напр. куриная грудка"></div>
+      <div><label>Кол-во</label><input class="ing-amount" type="number" step="0.1"></div>
+      <div><label>Ед.</label><select class="ing-unit">${UNITS.map(u=>`<option ${u==='г'?'selected':''}>${u}</option>`).join('')}</select></div>
+      <button class="danger" type="button" data-action="remove-ing" data-idx="${idx}">✕</button>`;
+    container.appendChild(div);
+  });
+  document.getElementById('cancelRecipeBtn')?.addEventListener('click', ()=>{ state.showRecipeForm=false; state.editingRecipe=null; render(); });
+  document.getElementById('saveRecipeBtn')?.addEventListener('click', saveRecipeHandler);
+  document.getElementById('ingContainer')?.addEventListener('click', (e)=>{
+    const btn = e.target.closest('[data-action="remove-ing"]');
+    if(btn){ btn.closest('.ing-row').remove(); }
+  });
+  document.querySelectorAll('[data-action="edit-recipe"]').forEach(b=> b.addEventListener('click', ()=>{
+    state.editingRecipe = b.dataset.id; state.showRecipeForm = true; render();
+    window.scrollTo({top:0,behavior:'smooth'});
+  }));
+  document.querySelectorAll('[data-action="delete-recipe"]').forEach(b=> b.addEventListener('click', ()=> deleteRecipe(b.dataset.id)));
+  document.querySelectorAll('[data-action="add-to-plan"]').forEach(b=> b.addEventListener('click', ()=>{
+    state.addRecipeToDay = b.dataset.id;
+    state.tab = 'plan'; render();
+    toast('Выбери день в плане 👇');
+  }));
+}
+
+async function saveRecipeHandler(){
+  const name = document.getElementById('rf-name').value.trim();
+  if(!name){ toast('⚠️ Введите название'); return; }
+  const servings = parseInt(document.getElementById('rf-servings').value)||1;
+  const process = document.getElementById('rf-process').value.trim();
+  const sourceUrl = document.getElementById('rf-source').value.trim();
+  const rows = document.querySelectorAll('#ingContainer .ing-row');
+  const ingredients = [];
+  rows.forEach(row=>{
+    const n = row.querySelector('.ing-name').value.trim();
+    const a = row.querySelector('.ing-amount').value;
+    const u = row.querySelector('.ing-unit').value;
+    if(n) ingredients.push({ name: n, amount: a, unit: u });
+  });
+  if(ingredients.length===0){ toast('⚠️ Добавьте ингредиенты'); return; }
+
+  let screenshot = state.editingRecipe ? (state.recipes.find(x=>x.id===state.editingRecipe)?.screenshot||'') : '';
+  let photo = state.editingRecipe ? (state.recipes.find(x=>x.id===state.editingRecipe)?.photo||'') : '';
+  const scFile = document.getElementById('rf-screenshot').files[0];
+  const phFile = document.getElementById('rf-photo').files[0];
+  if(scFile){ try { screenshot = await compressImage(scFile); } catch(e){ toast('Ошибка фото'); } }
+  if(phFile){ try { photo = await compressImage(phFile); } catch(e){ toast('Ошибка фото'); } }
+
+  const data = { name, servings, ingredients, process, sourceUrl, screenshot, photo };
+  // manual nutrition overrides
+  const manual = {};
+  const k = document.getElementById('rf-kcal').value;
+  const pr = document.getElementById('rf-protein').value;
+  const ft = document.getElementById('rf-fat').value;
+  const cb = document.getElementById('rf-carbs').value;
+  const gr = document.getElementById('rf-grams').value;
+  if(k!==''||pr!==''||ft!==''||cb!==''||gr!==''){
+    manual.override = true;
+    if(k!=='') manual.kcal = parseInt(k);
+    if(pr!=='') manual.protein = parseFloat(pr);
+    if(ft!=='') manual.fat = parseFloat(ft);
+    if(cb!=='') manual.carbs = parseFloat(cb);
+    if(gr!=='') manual.totalGrams = parseInt(gr);
+  }
+  data.manualNutrition = manual.override ? manual : null;
+  try {
+    if(state.editingRecipe){ await updateRecipe(state.editingRecipe, data); toast('✅ Обновлено'); }
+    else { await addRecipe(data); toast('✅ Рецепт добавлен'); }
+    state.showRecipeForm = false; state.editingRecipe = null; render();
+  } catch(e){ console.error(e); toast('❌ Ошибка сохранения'); }
+}
+
+// ===== PLAN =====
+function renderPlan(main){
+  const monday = state.weekStart;
+  const dates = {};
+  DAYS.forEach((d,i)=>{ const dd = new Date(monday); dd.setDate(monday.getDate()+i); dates[d.key]=dd; });
+
+  let html = '';
+  if(state.localMode) html += `<div class="config-banner">⚠️ Локальный режим.</div>`;
+  html += `<div class="card">
+    <div class="week-nav">
+      <button class="ghost" id="prevWeek">◀ Неделя</button>
+      <div class="label">📅 ${fmtDate(monday)} — ${fmtDate(addDays(monday,6))}</div>
+      <button class="ghost" id="nextWeek">Неделя ▶</button>
+    </div>
+    <div class="row" style="align-items:center">
+      <h2 style="margin:0">План на неделю</h2>
+      <button class="ghost" id="printBtn">🖨️ Печать</button>
+      <button class="ghost" id="copyWeekBtn">📋 На след. неделю</button>
+    </div>
+    <p class="muted">Нажми «➕» в день, чтобы добавить блюдо. ${state.addRecipeToDay? 'Выбери день для добавления рецепта.' : ''}</p>
+  </div>`;
+
+  if(state.addRecipeToDay){
+    const r = state.recipes.find(x=>x.id===state.addRecipeToDay);
+    html += `<div class="card" style="border:2px solid var(--berry)">
+      <b>Добавить «${escapeHtml(r?.name||'')}» в день:</b>
+      <div class="row" style="margin-top:8px">
+        ${DAYS.map(d=>`<button class="ghost" data-action="confirm-add-day" data-day="${d.key}">${d.emoji} ${d.name}</button>`).join('')}
+        <button class="danger" data-action="cancel-add">Отмена</button>
+      </div>
+    </div>`;
+  }
+
+  html += `<div class="day-grid">`;
+  for(const d of DAYS){
+    const items = state.plan[d.key] || [];
+    html += `<div class="day-col">
+      <h3>${d.emoji} ${d.name}</h3>
+      <div class="day-date">${fmtDate(dates[d.key])}</div>
+      ${items.map((it, idx)=>{
+        const r = state.recipes.find(x=>x.id===it.recipeId);
+        const nm = r? r.name : '(удалён)';
+        const serv = it.servings || 1;
+        return `<div class="planned-item">
+          <div class="title">${escapeHtml(nm)}</div>
+          <div class="muted">${serv} порц.</div>
+          <div class="actions">
+            <input type="number" min="1" value="${serv}" style="width:50px;padding:2px" data-action="servings" data-day="${d.key}" data-idx="${idx}">
+            <button data-action="remove-planned" data-day="${d.key}" data-idx="${idx}">🗑️</button>
+          </div>
+        </div>`;
+      }).join('')}
+      <div style="margin-top:6px">
+        <select data-action="quick-add" data-day="${d.key}" style="font-size:12px">
+          <option value="">➕ Добавить...</option>
+          ${state.recipes.map(r=>`<option value="${r.id}">${escapeHtml(r.name)}</option>`).join('')}
+        </select>
+      </div>
+      ${dayTotalsHtml(d.key)}
+    </div>`;
+  }
+  html += `</div>`;
+  html += weekTotalsHtml();
+  main.innerHTML = html;
+  bindPlanEvents();
+}
+
+function dayTotalsHtml(dayKey){
+  const items = state.plan[dayKey]||[];
+  let k=0,p=0,f=0,c=0,g=0;
+  for(const it of items){
+    const r = state.recipes.find(x=>x.id===it.recipeId);
+    if(!r?.nutrition) continue;
+    const serv = it.servings||1;
+    const n = r.nutrition;
+    const perServ = (r.servings||1);
+    k += (n.kcal||0)/perServ*serv;
+    p += (n.protein||0)/perServ*serv;
+    f += (n.fat||0)/perServ*serv;
+    c += (n.carbs||0)/perServ*serv;
+    g += (n.totalGrams||0)/perServ*serv;
+  }
+  if(items.length===0) return '';
+  return `<div class="nutrition" style="margin-top:8px">
+    <div class="nut"><b>${Math.round(k)}</b>ккал</div>
+    <div class="nut"><b>${p.toFixed(1)}</b>Б</div>
+    <div class="nut"><b>${f.toFixed(1)}</b>Ж</div>
+    <div class="nut"><b>${c.toFixed(1)}</b>У</div>
+  </div>
+  <div class="muted" style="text-align:center;margin-top:2px">${Math.round(g)} г</div>`;
+}
+
+function weekTotalsHtml(){
+  let k=0,p=0,f=0,c=0;
+  for(const d of DAYS){
+    const items = state.plan[d.key]||[];
+    for(const it of items){
+      const r = state.recipes.find(x=>x.id===it.recipeId);
+      if(!r?.nutrition) continue;
+      const serv = it.servings||1;
+      const n = r.nutrition; const perServ = r.servings||1;
+      k += (n.kcal||0)/perServ*serv;
+      p += (n.protein||0)/perServ*serv;
+      f += (n.fat||0)/perServ*serv;
+      c += (n.carbs||0)/perServ*serv;
+    }
+  }
+  return `<div class="card"><h3>📊 Итого за неделю</h3>
+    <div class="nutrition">
+      <div class="nut"><b>${Math.round(k)}</b>ккал</div>
+      <div class="nut"><b>${p.toFixed(1)}</b>белки</div>
+      <div class="nut"><b>${f.toFixed(1)}</b>жиры</div>
+      <div class="nut"><b>${c.toFixed(1)}</b>углеводы</div>
+    </div>
+    <div class="muted" style="margin-top:6px">В среднем в день: ${Math.round(k/7)} ккал</div>
+  </div>`;
+}
+
+function bindPlanEvents(){
+  document.getElementById('prevWeek')?.addEventListener('click', ()=> changeWeek(-1));
+  document.getElementById('nextWeek')?.addEventListener('click', ()=> changeWeek(1));
+  document.getElementById('printBtn')?.addEventListener('click', ()=> window.print());
+  document.getElementById('copyWeekBtn')?.addEventListener('click', ()=> copyWeekToNext());
+
+  document.querySelectorAll('[data-action="confirm-add-day"]').forEach(b=> b.addEventListener('click', ()=>{
+    const day = b.dataset.day;
+    const recipeId = state.addRecipeToDay;
+    if(!state.plan[day]) state.plan[day]=[];
+    state.plan[day].push({ recipeId, servings: 1 });
+    state.addRecipeToDay = null;
+    savePlan();
+    toast('✅ Добавлено');
+  }));
+  document.querySelector('[data-action="cancel-add"]')?.addEventListener('click', ()=>{ state.addRecipeToDay=null; render(); });
+
+  document.querySelectorAll('select[data-action="quick-add"]').forEach(sel=>{
+    sel.addEventListener('change', (e)=>{
+      const day = sel.dataset.day;
+      const rid = e.target.value;
+      if(!rid) return;
+      if(!state.plan[day]) state.plan[day]=[];
+      state.plan[day].push({ recipeId: rid, servings: 1 });
+      e.target.value='';
+      savePlan();
+      toast('✅ Добавлено');
+    });
+  });
+
+  document.querySelectorAll('[data-action="remove-planned"]').forEach(b=> b.addEventListener('click', ()=>{
+    const day = b.dataset.day; const idx = parseInt(b.dataset.idx);
+    state.plan[day].splice(idx,1);
+    savePlan();
+  }));
+
+  document.querySelectorAll('input[data-action="servings"]').forEach(inp=>{
+    inp.addEventListener('change', (e)=>{
+      const day = inp.dataset.day; const idx = parseInt(inp.dataset.idx);
+      const v = parseInt(inp.value)||1;
+      state.plan[day][idx].servings = v;
+      savePlan();
+    });
+  });
+}
+
+function changeWeek(delta){
+  const d = new Date(state.weekStart);
+  d.setDate(d.getDate() + delta*7);
+  state.weekStart = getMonday(d);
+  state.weekKey = weekKeyOf(state.weekStart);
+  if(state.localMode){
+    if(!state.weeks[state.weekKey]) state.weeks[state.weekKey] = { plan: defaultPlan(), checked: {} };
+    state.plan = state.weeks[state.weekKey].plan;
+    state.checked = state.weeks[state.weekKey].checked;
+    render();
+  } else {
+    state.plan = defaultPlan(); state.checked = {};
+    state.loading = false;
+    subscribeWeek(state.weekKey);
+  }
+}
+
+async function copyWeekToNext(){
+  const nextStart = addDays(state.weekStart, 7);
+  const nextKey = weekKeyOf(nextStart);
+  const copy = JSON.parse(JSON.stringify(state.plan));
+  if(state.localMode){
+    state.weeks[nextKey] = { plan: copy, checked: {} };
+    saveLocal();
+  } else {
+    await setDoc(weekDoc(nextKey), { plan: copy, checked: {} }, { merge: true });
+  }
+  toast('✅ План скопирован на следующую неделю');
+  // navigate to next week to view
+  state.weekStart = getMonday(nextStart);
+  state.weekKey = nextKey;
+  if(state.localMode){
+    state.plan = state.weeks[nextKey].plan;
+    state.checked = state.weeks[nextKey].checked;
+    render();
+  } else {
+    state.plan = defaultPlan(); state.checked = {};
+    subscribeWeek(nextKey);
+  }
+}
+
+// ===== SHOPPING =====
+function renderShopping(main){
+  const agg = {};
+  for(const d of DAYS){
+    for(const it of (state.plan[d.key]||[])){
+      const r = state.recipes.find(x=>x.id===it.recipeId);
+      if(!r) continue;
+      for(const ing of (r.ingredients||[])){
+        const key = ing.name.toLowerCase().trim() + '|' + ing.unit;
+        if(!agg[key]) agg[key] = { name: ing.name, unit: ing.unit, amount: 0 };
+        agg[key].amount += parseFloat(ing.amount)||0;
+      }
+    }
+  }
+  const items = Object.values(agg);
+  const groups = {};
+  for(const it of items){
+    const cat = categoryOf(it.name);
+    if(!groups[cat]) groups[cat] = [];
+    groups[cat].push(it);
+  }
+  for(const cat in groups) groups[cat].sort((a,b)=>a.name.localeCompare(b.name,'ru'));
+
+  let html = `<div class="card"><h2>🛒 Список покупок</h2>
+    <p class="muted">Собран из запланированных блюд (неделя ${fmtDate(state.weekStart)}). Отмечай купленное.</p>
+    ${items.length===0 ? '<p>План пуст — нечего покупать 🤷</p>' : ''}
+  </div>`;
+  if(items.length){
+    html += `<div class="card">
+      <button class="ghost" id="copyShopBtn" style="margin-bottom:10px">📋 Скопировать список</button>`;
+    for(const cat of Object.keys(groups).sort()){
+      html += `<div class="shop-cat">${cat}</div>`;
+      for(const it of groups[cat]){
+        const key = it.name.toLowerCase().trim()+'|'+it.unit;
+        const checked = !!state.checked[key];
+        html += `<div class="shop-item ${checked?'checked':''}">
+          <input type="checkbox" data-shop-key="${key}" ${checked?'checked':''}>
+          <span>${escapeHtml(it.name)} - ${+it.amount.toFixed(2)} ${escapeHtml(it.unit)}</span>
+        </div>`;
+      }
+    }
+    html += `<div style="margin-top:12px"><button class="ghost" id="clearChecks">Сбросить отметки</button></div></div>`;
+  }
+  main.innerHTML = html;
+  bindShoppingEvents();
+}
+
+function bindShoppingEvents(){
+  document.querySelectorAll('input[data-shop-key]').forEach(cb=>{
+    cb.addEventListener('change', (e)=>{
+      const key = cb.dataset.shopKey;
+      if(cb.checked) state.checked[key]=true; else delete state.checked[key];
+      cb.closest('.shop-item').classList.toggle('checked', cb.checked);
+      savePlan();
+    });
+  });
+  document.getElementById('clearChecks')?.addEventListener('click', ()=>{
+    state.checked = {}; savePlan(); render();
+  });
+}
+
+// ===== SHARE =====
+function renderShare(main){
+  const link = location.origin + location.pathname + '?h=' + state.householdId;
+  let html = `<div class="card"><h2>🔗 Поделиться</h2>
+    <p>Отправь эту ссылку жене — она откроет то же меню и сможет управлять им.</p>
+    <div class="link-box" id="shareLink">${escapeHtml(link)}</div>
+    <div class="row" style="margin-top:10px">
+      <button class="primary" id="copyLink">📋 Копировать ссылку</button>
+    </div>
+    <p class="muted" style="margin-top:10px">ID семьи: <code>${escapeHtml(state.householdId)}</code></p>
+  </div>`;
+
+  if(!state.localMode){
+    html += `<div class="card"><h2>🔒 Пароль семьи</h2>
+      <p class="muted">Защита данных при шаринге ссылкой. ${state.pwHash ? 'Пароль установлен.' : 'Пароль не установлен (доступ открыт по ссылке).'}</p>
+      <div class="row" style="align-items:end">
+        <div><label>Новый пароль</label><input id="newPw" type="password" placeholder="Оставь пустым, чтобы снять пароль"></div>
+        <button class="primary" id="setPwBtn">Сохранить</button>
+      </div>
+    </div>`;
+  }
+  if(state.localMode){
+    html += `<div class="card"><h2>⚙️ Настройка Firebase (для шаринга)</h2>
+      <ol style="font-size:14px;line-height:1.8">
+        <li>Зайди на <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a>, создай проект.</li>
+        <li>Включи <b>Authentication → Anonymous</b> (Sign-in method).</li>
+        <li>Создай <b>Firestore Database</b> (start in test mode).</li>
+        <li>В Project settings скопируй конфиг (apiKey и др.) и вставь в начало файла <code>index.html</code> в переменную <code>FIREBASE_CONFIG</code>.</li>
+        <li>Правила Firestore (для семьи):<br>
+          <pre style="background:#f5f5f5;padding:8px;border-radius:8px;font-size:12px">rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /households/{hh}/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}</pre>
+        </li>
+        <li>Разместить на GitHub Pages: создай репо, положи <code>index.html</code>, включи Pages.</li>
+      </ol>
+    </div>`;
+  } else {
+    html += `<div class="card"><h3>✅ Firebase подключён</h3><p class="muted">Режим реального времени включён. Изменения синхронизируются автоматически.</p></div>`;
+  }
+  main.innerHTML = html;
+  document.getElementById('copyLink')?.addEventListener('click', ()=>{
+    navigator.clipboard.writeText(link).then(()=>toast('✅ Ссылка скопирована')).catch(()=>toast('Скопируй вручную'));
+  });
+  document.getElementById('setPwBtn')?.addEventListener('click', async ()=>{
+    const pw = document.getElementById('newPw').value;
+    let hash = null;
+    if(pw.trim()!==''){ hash = await hashPassword(pw); }
+    try {
+      await setDoc(householdRef(), { passwordHash: hash }, { merge: true });
+      state.pwHash = hash;
+      if(hash){ localStorage.setItem('menuapp_pw_' + state.householdId, hash); state.pwVerified = true; }
+      else { localStorage.removeItem('menuapp_pw_' + state.householdId); }
+      toast(hash ? '✅ Пароль установлен' : '✅ Пароль снят');
+      render();
+    } catch(e){ console.error(e); toast('❌ Ошибка'); }
+  });
+}
+
+async function seedRecipes(){
+  if(state.recipes.length > 0) return;
+  for(const r of SEED_RECIPES){
+    await addRecipe({ name: r.name, servings: r.servings, ingredients: r.ingredients, process: r.process||"", sourceUrl: "", screenshot: "", photo: "" });
+  }
+}
+
+// ===== INIT =====
+async function init(){
+  resolveHousehold();
+  state.weekStart = getMonday(new Date());
+  state.weekKey = weekKeyOf(state.weekStart);
+  await initFirebase();
+  if(state.localMode){
+    loadLocal();
+    await seedRecipes();
+    state.loading = false;
+    render();
+  } else {
+    try {
+      await ensureHouseholdDoc();
+      // load password hash
+      const hSnap = await getDoc(householdRef());
+      state.pwHash = hSnap.exists() ? (hSnap.data().passwordHash || null) : null;
+      if(state.pwHash){
+        const saved = localStorage.getItem('menuapp_pw_' + state.householdId);
+        state.pwVerified = (saved === state.pwHash);
+      } else {
+        state.pwVerified = true;
+      }
+      subscribeRecipes();
+      subscribeWeek(state.weekKey);
+      // seed if empty (one-time)
+      setTimeout(async ()=>{ if(state.recipes.length===0) await seedRecipes(); }, 1200);
+      state.loading = false;
+      setTimeout(()=>{ state.loading=false; render(); }, 800);
+    } catch(e){
+      console.error(e); state.localMode=true; loadLocal(); state.loading=false; render();
+    }
+  }
+}
+
+document.querySelectorAll('nav.tabs button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    state.tab = b.dataset.tab;
+    render();
+  });
+});
+
+init();
+document.querySelector(`nav.tabs button[data-tab="${state.tab}"]`).classList.add('active');
+</script>
+</body>
+</html>
