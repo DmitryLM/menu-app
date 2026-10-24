@@ -144,7 +144,7 @@
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore, collection, doc, onSnapshot, setDoc, addDoc, updateDoc, deleteDoc, serverTimestamp, getDoc, getDocFromServer, getDocs, getDocsFromServer } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getFirestore, initializeFirestore, memoryLocalCache, collection, doc, onSnapshot, setDoc, addDoc, updateDoc, deleteDoc, serverTimestamp, getDoc, getDocFromServer, getDocs, getDocsFromServer } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const FIREBASE_CONFIG = {
@@ -593,7 +593,7 @@ async function initFirebase(){
   try {
     const app = initializeApp(FIREBASE_CONFIG);
     state.firebase = app;
-    state.db = getFirestore(app);
+    state.db = initializeFirestore(app, { localCache: memoryLocalCache() });
     state.auth = getAuth(app);
     await new Promise((resolve, reject)=>{
       const unsub = onAuthStateChanged(state.auth, (u)=>{
