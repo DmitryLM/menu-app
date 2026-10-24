@@ -754,7 +754,7 @@ async function restoreRecipe(id){
 }
 
 async function hardDeleteTrash(id){
-  if(!confirm('Удалить навсегда? Это действие необратимо.')) return;
+  if(!(window.__TEST__skipConfirm) && !confirm('Удалить навсегда? Это действие необратимо.')) return;
   const item = state.trash.find(x=>x.id===id);
   if(state.localMode){
     state.trash = state.trash.filter(x=>x.id!==id);
@@ -1404,14 +1404,18 @@ async function seedRecipes(){
 function updateHeaderStatus(){
   const el = document.getElementById('headerStatus');
   if(!el) return;
+  const online = navigator.onLine ? '●' : '○ (оффлайн)';
   if(state.localMode){
-    el.textContent = 'LOCAL MODE (no sync) · Family ID: ' + state.householdId;
+    el.textContent = '🟡 LOCAL MODE (no sync) ' + online + ' · Family ID: ' + state.householdId;
     el.style.color = '#ffe';
   } else {
-    el.textContent = 'SYNC ACTIVE · Family ID: ' + state.householdId;
+    el.textContent = '🟢 SYNC ACTIVE ' + online + ' · Family ID: ' + state.householdId;
     el.style.color = '#eaffea';
   }
 }
+
+window.addEventListener('online', ()=>{ updateHeaderStatus(); if(!state.localMode) try { subscribeRecipes(); subscribeTrash(); subscribeWeek(state.weekKey); } catch(e){} });
+window.addEventListener('offline', ()=>{ updateHeaderStatus(); });
 
 document.addEventListener('visibilitychange', ()=>{
   if(!document.hidden && !state.localMode){
