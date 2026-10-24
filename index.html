@@ -784,6 +784,14 @@ async function hardDeleteTrash(id){
     toast('❌ Удалено навсегда');
     return;
   }
+  // BEFORE: fetch entire trash collection to verify server state before delete
+  try {
+    const beforeTrash = await getDocsFromServer(trashCol());
+    console.log('[HARDDELETE] Trash collection count BEFORE delete:', beforeTrash.docs.length, 'docs');
+    beforeTrash.docs.forEach(d => console.log('[HARDDELETE]   BEFORE trash doc:', d.id));
+  } catch(be) {
+    console.error('[HARDDELETE] BEFORE collection fetch failed:', be.code || be.message || be);
+  }
   // optimistic update
   state.trash = state.trash.filter(x=>x.id!==id);
   render();
@@ -798,17 +806,17 @@ async function hardDeleteTrash(id){
       const v = await getDocFromServer(doc(state.db,'households',state.householdId,'trash',id));
       committed = !v.exists();
       console.log('[HARDDELETE] Verification result: exists=', v.exists(), 'committed=', committed);
-    // Additional check: fetch entire trash collection to verify server state
-    try {
-      const allTrash = await getDocsFromServer(trashCol());
-      console.log('[HARDDELETE] Trash collection count AFTER delete:', allTrash.docs.length, 'docs');
-      allTrash.docs.forEach(d => console.log('[HARDDELETE]   trash doc:', d.id));
-    } catch(ce) {
-      console.error('[HARDDELETE] Collection verification failed:', ce.code || ce.message || ce);
-    }
     } catch(ve){
       console.error('[HARDDELETE] Verification failed:', ve.code || ve.message || ve);
       committed = 'unknown';
+    }
+    // Additional check: fetch entire trash collection to verify server state AFTER delete
+    try {
+      const allTrash = await getDocsFromServer(trashCol());
+      console.log('[HARDDELETE] Trash collection count AFTER delete:', allTrash.docs.length, 'docs');
+      allTrash.docs.forEach(d => console.log('[HARDDELETE]   AFTER trash doc:', d.id));
+    } catch(ce) {
+      console.error('[HARDDELETE] Collection verification failed:', ce.code || ce.message || ce);
     }
     console.error('HARDDELETE_RESULT', id, 'committed=', committed, 'online=', navigator.onLine, 'user=', state.user?.uid);
     if(committed === true){
