@@ -144,7 +144,7 @@
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore, collection, doc, onSnapshot, setDoc, addDoc, updateDoc, deleteDoc, serverTimestamp, getDoc, getDocFromServer } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getFirestore, collection, doc, onSnapshot, setDoc, addDoc, updateDoc, deleteDoc, serverTimestamp, getDoc, getDocFromServer, getDocs, getDocsFromServer } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const FIREBASE_CONFIG = {
@@ -1460,7 +1460,7 @@ async function init(){
     try {
       await ensureHouseholdDoc();
       // load password hash
-      const hSnap = await getDoc(householdRef());
+      const hSnap = await getDocFromServer(householdRef());
       state.pwHash = hSnap.exists() ? (hSnap.data().passwordHash || null) : null;
       if(state.pwHash){
         const saved = localStorage.getItem('menuapp_pw_' + state.householdId);
@@ -1468,6 +1468,18 @@ async function init(){
       } else {
         state.pwVerified = true;
       }
+      // Force authoritative server read to bypass stale client cache
+      try {
+        const rr = await getDocsFromServer(recipesCol());
+        state.recipes = rr.docs.map(d => ({ id: d.id, ...d.data() }));
+        state.recipes.sort((a,b)=> (b.createdAt?.toMillis?.()||0) - (a.createdAt?.toMillis?.()||0));
+        const tr = await getDocsFromServer(trashCol());
+        state.trash = tr.docs.map(d => ({ id: d.id, ...d.data() }));
+        state.trash.sort((a,b)=> (b.deletedAt?.toMillis?.()||b._deletedAtMs||0) - (a.deletedAt?.toMillis?.()||a._deletedAtMs||0));
+        const wk = await getDocFromServer(weekDoc(state.weekKey));
+        if(wk.exists()){ const d = wk.data(); state.plan = d.plan || DEFAULT_PLAN(); state.checked = d.checked || {}; }
+        else { state.plan = DEFAULT_PLAN(); state.checked = {}; setDoc(weekDoc(state.weekKey), { plan: state.plan, checked: {} }); }
+      } catch(e){ console.error('server fetch', e); }
       subscribeRecipes();
       subscribeTrash();
       subscribeWeek(state.weekKey);
