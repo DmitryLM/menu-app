@@ -595,14 +595,23 @@ async function initFirebase(){
     state.firebase = app;
     state.db = initializeFirestore(app, { localCache: memoryLocalCache() });
     state.auth = getAuth(app);
+    console.log('[INIT] Firebase app created, signing in anonymously...');
     await new Promise((resolve, reject)=>{
       const unsub = onAuthStateChanged(state.auth, (u)=>{
-        if(u){ state.user = u; unsub(); resolve(); }
-      }, reject);
+        if(u){ 
+          state.user = u; 
+          console.log('[INIT] Auth success, uid=', u.uid, 'isAnonymous=', u.isAnonymous);
+          unsub(); 
+          resolve(); 
+        }
+      }, (err)=>{
+        console.error('[INIT] Auth error:', err);
+        reject(err);
+      });
       signInAnonymously(state.auth).catch(reject);
     });
   } catch(e){
-    console.error(e);
+    console.error('[INIT] Firebase init failed:', e);
     state.localMode = true;
     toast('Firebase недоступен, работаем локально');
   }
@@ -618,25 +627,35 @@ async function ensureHouseholdDoc(){
 
 function subscribeRecipes(){
   if(state.unsubRecipes) state.unsubRecipes();
+  console.log('[SUB] Subscribing to recipes...');
   state.unsubRecipes = onSnapshot(recipesCol(), (snap)=>{
+    console.log('[SUB] Recipes snapshot:', snap.docs.length, 'docs, fromCache=', snap.metadata.fromCache);
     state.recipes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     state.recipes.sort((a,b)=> (b.createdAt?.toMillis?.()||0) - (a.createdAt?.toMillis?.()||0));
     render();
+  }, (err) => {
+    console.error('[SUB] Recipes subscription error:', err.code || err.message || err);
   });
 }
 function subscribeTrash(){
   if(state.unsubTrash) state.unsubTrash();
+  console.log('[SUB] Subscribing to trash...');
   state.unsubTrash = onSnapshot(trashCol(), (snap)=>{
+    console.log('[SUB] Trash snapshot:', snap.docs.length, 'docs, fromCache=', snap.metadata.fromCache);
     state.trash = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     state.trash.sort((a,b)=> (b.deletedAt?.toMillis?.()||b._deletedAtMs||0) - (a.deletedAt?.toMillis?.()||a._deletedAtMs||0));
     purgeExpiredTrashFirebase();
     render();
+  }, (err) => {
+    console.error('[SUB] Trash subscription error:', err.code || err.message || err);
   });
 }
 
 function subscribeWeek(key){
   if(state.unsubWeek) state.unsubWeek();
+  console.log('[SUB] Subscribing to week:', key);
   state.unsubWeek = onSnapshot(weekDoc(key), (snap)=>{
+    console.log('[SUB] Week snapshot: exists=', snap.exists(), 'fromCache=', snap.metadata.fromCache);
     if(snap.exists()){
       const d = snap.data();
       state.plan = d.plan || defaultPlan();
@@ -647,6 +666,8 @@ function subscribeWeek(key){
       setDoc(weekDoc(key), { plan: state.plan, checked: {} });
     }
     render();
+  }, (err) => {
+    console.error('[SUB] Week subscription error:', err.code || err.message || err);
   });
 }
 
@@ -756,6 +777,7 @@ async function restoreRecipe(id){
 async function hardDeleteTrash(id){
   if(!confirm('Удалить навсегда? Это действие необратимо.')) return;
   const item = state.trash.find(x=>x.id===id);
+  console.log('[HARDDELETE] Starting hard delete for:', id, 'localMode=', state.localMode, 'user=', state.user?.uid);
   if(state.localMode){
     state.trash = state.trash.filter(x=>x.id!==id);
     saveLocal(); render();
@@ -766,17 +788,21 @@ async function hardDeleteTrash(id){
   state.trash = state.trash.filter(x=>x.id!==id);
   render();
   try {
+    console.log('[HARDDELETE] Calling deleteDoc...');
     await deleteDoc(doc(state.db,'households',state.householdId,'trash',id));
+    console.log('[HARDDELETE] deleteDoc resolved');
     // server-side confirmation to tell offline-pending vs truly committed
     let committed = true;
     try {
+      console.log('[HARDDELETE] Verifying with getDocFromServer...');
       const v = await getDocFromServer(doc(state.db,'households',state.householdId,'trash',id));
       committed = !v.exists();
+      console.log('[HARDDELETE] Verification result: exists=', v.exists(), 'committed=', committed);
     } catch(ve){
-      console.error('verify failed', ve);
+      console.error('[HARDDELETE] Verification failed:', ve.code || ve.message || ve);
       committed = 'unknown';
     }
-    console.error('HARDDELETE_RESULT', id, 'committed=', committed, 'online=', navigator.onLine);
+    console.error('HARDDELETE_RESULT', id, 'committed=', committed, 'online=', navigator.onLine, 'user=', state.user?.uid);
     if(committed === true){
       toast('✅ Сервер подтвердил удаление');
     } else if(committed === false){
@@ -788,7 +814,7 @@ async function hardDeleteTrash(id){
       toast('⚠️ Не удалось проверить сервер: ' + committed);
     }
   } catch(e){
-    console.error('hardDeleteTrash failed', e);
+    console.error('[HARDDELETE] Failed:', e.code || e.message || e);
     if(item) state.trash.unshift(item);
     render();
     toast('❌ Ошибка: ' + (e.code||e.message||e));
@@ -1469,17 +1495,38 @@ async function init(){
         state.pwVerified = true;
       }
       // Force authoritative server read to bypass stale client cache
+      console.log('[INIT] Starting forced server fetch for household:', state.householdId);
       try {
+        console.log('[INIT] Fetching recipes from server...');
         const rr = await getDocsFromServer(recipesCol());
+        console.log('[INIT] Recipes from server:', rr.docs.length, 'docs');
         state.recipes = rr.docs.map(d => ({ id: d.id, ...d.data() }));
         state.recipes.sort((a,b)=> (b.createdAt?.toMillis?.()||0) - (a.createdAt?.toMillis?.()||0));
+        
+        console.log('[INIT] Fetching trash from server...');
         const tr = await getDocsFromServer(trashCol());
+        console.log('[INIT] Trash from server:', tr.docs.length, 'docs');
         state.trash = tr.docs.map(d => ({ id: d.id, ...d.data() }));
         state.trash.sort((a,b)=> (b.deletedAt?.toMillis?.()||b._deletedAtMs||0) - (a.deletedAt?.toMillis?.()||a._deletedAtMs||0));
+        
+        console.log('[INIT] Fetching week plan from server...');
         const wk = await getDocFromServer(weekDoc(state.weekKey));
-        if(wk.exists()){ const d = wk.data(); state.plan = d.plan || DEFAULT_PLAN(); state.checked = d.checked || {}; }
-        else { state.plan = DEFAULT_PLAN(); state.checked = {}; setDoc(weekDoc(state.weekKey), { plan: state.plan, checked: {} }); }
-      } catch(e){ console.error('server fetch', e); }
+        if(wk.exists()){ 
+          const d = wk.data(); 
+          state.plan = d.plan || DEFAULT_PLAN(); 
+          state.checked = d.checked || {}; 
+          console.log('[INIT] Week plan loaded from server');
+        }
+        else { 
+          state.plan = DEFAULT_PLAN(); 
+          state.checked = {}; 
+          console.log('[INIT] No week plan on server, creating default');
+          setDoc(weekDoc(state.weekKey), { plan: state.plan, checked: {} }); 
+        }
+        console.log('[INIT] Server fetch complete, recipes=', state.recipes.length, 'trash=', state.trash.length);
+      } catch(e){ 
+        console.error('[INIT] Server fetch FAILED:', e.code || e.message || e); 
+      }
       subscribeRecipes();
       subscribeTrash();
       subscribeWeek(state.weekKey);
@@ -1488,7 +1535,8 @@ async function init(){
       state.loading = false;
       setTimeout(()=>{ state.loading=false; render(); }, 800);
     } catch(e){
-      console.error(e); state.localMode=true; loadLocal(); state.loading=false; render();
+      console.error('[INIT] Fatal error, falling back to localMode:', e.code || e.message || e);
+      state.localMode=true; loadLocal(); state.loading=false; render();
     }
   }
 }
