@@ -128,6 +128,7 @@
 <header>
   <h1>🍽️ Меню на неделю</h1>
   <div class="sub" id="headerSub">Составляем меню вместе 💕</div>
+  <div class="sub" id="headerStatus" style="margin-top:2px;font-size:12px;opacity:0.95"></div>
 </header>
 <nav class="tabs">
   <button data-tab="recipes" class="active">📖 Рецепты</button>
@@ -1400,6 +1401,25 @@ async function seedRecipes(){
   }
 }
 
+function updateHeaderStatus(){
+  const el = document.getElementById('headerStatus');
+  if(!el) return;
+  if(state.localMode){
+    el.textContent = 'LOCAL MODE (no sync) · Family ID: ' + state.householdId;
+    el.style.color = '#ffe';
+  } else {
+    el.textContent = 'SYNC ACTIVE · Family ID: ' + state.householdId;
+    el.style.color = '#eaffea';
+  }
+}
+
+document.addEventListener('visibilitychange', ()=>{
+  if(!document.hidden && !state.localMode){
+    try { subscribeRecipes(); subscribeTrash(); subscribeWeek(state.weekKey); } catch(e){}
+    updateHeaderStatus();
+  }
+});
+
 // ===== INIT =====
 async function init(){
   resolveHousehold();
@@ -1446,7 +1466,7 @@ document.querySelectorAll('nav.tabs button').forEach(b=>{
   });
 });
 
-init();
+init().then(()=>{ updateHeaderStatus(); });
 document.querySelector(`nav.tabs button[data-tab="${state.tab}"]`).classList.add('active');
 </script>
 </body>
