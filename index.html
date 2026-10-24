@@ -188,6 +188,7 @@ const state = {
   householdId: null,
   localMode: !isFirebaseConfigured(),
   recipes: [],
+  trash: [],
   plan: DEFAULT_PLAN(),
   checked: {},
   weeks: {}, // local cache map weekKey -> {plan,checked}
@@ -199,10 +200,12 @@ const state = {
   pwVerified: true,
   editingRecipe: null,
   showRecipeForm: false,
+  showTrash: false,
   addRecipeToDay: null,
   search: '',
   unsubRecipes: null,
   unsubWeek: null,
+  unsubTrash: null,
 };
 
 const DAYS = [
@@ -562,6 +565,7 @@ function loadLocal(){
     if(raw){
       const d = JSON.parse(raw);
       state.recipes = d.recipes||[];
+      state.trash = d.trash||[];
       state.weeks = d.weeks||{};
       if(d.plan && !d.weeks){ state.weeks[state.weekKey] = { plan: d.plan, checked: d.checked||{} }; }
     }
@@ -573,7 +577,7 @@ function loadLocal(){
 }
 function saveLocal(){
   state.weeks[state.weekKey] = { plan: state.plan, checked: state.checked };
-  localStorage.setItem('menuapp_' + state.householdId, JSON.stringify({ recipes: state.recipes, weeks: state.weeks }));
+  localStorage.setItem('menuapp_' + state.householdId, JSON.stringify({ recipes: state.recipes, trash: state.trash, weeks: state.weeks }));
 }
 
 async function hashPassword(pw){
@@ -604,6 +608,7 @@ async function initFirebase(){
 }
 function weekDoc(key){ return doc(state.db, 'households', state.householdId, 'weeks', key); }
 function recipesCol(){ return collection(state.db, 'households', state.householdId, 'recipes'); }
+function trashCol(){ return collection(state.db, 'households', state.householdId, 'trash'); }
 function householdRef(){ return doc(state.db, 'households', state.householdId); }
 
 async function ensureHouseholdDoc(){
@@ -618,6 +623,16 @@ function subscribeRecipes(){
     render();
   });
 }
+function subscribeTrash(){
+  if(state.unsubTrash) state.unsubTrash();
+  state.unsubTrash = onSnapshot(trashCol(), (snap)=>{
+    state.trash = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    state.trash.sort((a,b)=> (b.deletedAt?.toMillis?.()||b._deletedAtMs||0) - (a.deletedAt?.toMillis?.()||a._deletedAtMs||0));
+    purgeExpiredTrashFirebase();
+    render();
+  });
+}
+
 function subscribeWeek(key){
   if(state.unsubWeek) state.unsubWeek();
   state.unsubWeek = onSnapshot(weekDoc(key), (snap)=>{
@@ -690,15 +705,67 @@ async function updateRecipe(id, data){
   }
 }
 async function deleteRecipe(id){
-  if(!confirm('Удалить рецепт?')) return;
+  const r = state.recipes.find(x=>x.id===id);
+  if(!r) return;
+  if(!confirm('Удалить рецепт «' + r.name + '»? Он попадёт в «Удалённые» на 30 дней.')) return;
+  const deletedAt = Date.now();
   if(state.localMode){
-    state.recipes = state.recipes.filter(r=>r.id!==id);
+    state.trash.unshift({ ...r, deletedAt });
+    state.recipes = state.recipes.filter(x=>x.id!==id);
     for(const k in state.plan){ state.plan[k] = state.plan[k].filter(x=>x.recipeId!==id); }
+    purgeExpiredTrashLocal();
     saveLocal(); render();
   } else {
+    await addDoc(trashCol(), { ...r, deletedAt: serverTimestamp(), _deletedAtMs: deletedAt });
     await fbDeleteRecipe(id);
+    for(const k in state.plan){ state.plan[k] = state.plan[k].filter(x=>x.recipeId!==id); }
+    savePlan();
   }
-  toast('🗑️ Удалено');
+  toast('🗑️ Перенесено в удалённые');
+}
+
+async function restoreRecipe(id){
+  const r = state.trash.find(x=>x.id===id);
+  if(!r) return;
+  const { deletedAt, _deletedAtMs, ...recipe } = r;
+  if(state.localMode){
+    state.recipes.unshift(recipe);
+    state.trash = state.trash.filter(x=>x.id!==id);
+    saveLocal(); render();
+  } else {
+    await fbAddRecipe(recipe);
+    await deleteDoc(doc(state.db,'households',state.householdId,'trash',id));
+  }
+  toast('↩️ Восстановлено');
+}
+
+async function hardDeleteTrash(id){
+  if(!confirm('Удалить навсегда? Это действие необратимо.')) return;
+  if(state.localMode){
+    state.trash = state.trash.filter(x=>x.id!==id);
+    saveLocal(); render();
+  } else {
+    await deleteDoc(doc(state.db,'households',state.householdId,'trash',id));
+  }
+  toast('❌ Удалено навсегда');
+}
+
+function purgeExpiredTrashLocal(){
+  const now = Date.now();
+  const THIRTY = 30*24*60*60*1000;
+  state.trash = state.trash.filter(x => (now - (x.deletedAt||0)) < THIRTY);
+}
+
+async function purgeExpiredTrashFirebase(){
+  if(state.localMode) return;
+  const now = Date.now();
+  const THIRTY = 30*24*60*60*1000;
+  for(const r of state.trash){
+    const ts = r._deletedAtMs || (r.deletedAt?.toMillis?.() || 0);
+    if(ts && (now - ts) >= THIRTY){
+      try { await deleteDoc(doc(state.db,'households',state.householdId,'trash',r.id)); } catch(e){}
+    }
+  }
 }
 function savePlan(){
   if(state.localMode){ saveLocal(); render(); }
@@ -765,8 +832,33 @@ function renderRecipes(main){
     html += `<div class="card" style="text-align:center">Пока нет рецептов. Добавь первый! 🍳</div>`;
   }
   for(const r of filtered) html += renderRecipeCard(r);
+
+  // trash subsection
+  if(state.localMode) purgeExpiredTrashLocal();
+  const trashItems = state.trash || [];
+  html += `<div class="card" style="margin-top:16px">
+    <details ${state.showTrash?'open':''} id="trashDetails">
+      <summary style="cursor:pointer;font-weight:600;color:var(--berry)">🗑️ Удалённые рецепты (${trashItems.length})</summary>
+      <div style="margin-top:10px">
+        ${trashItems.length===0 ? '<p class="muted">Пусто</p>' : ''}
+        ${trashItems.map(r => {
+          const daysLeft = Math.max(0, 30 - Math.floor((Date.now() - (r.deletedAt||r._deletedAtMs||0))/(24*60*60*1000)));
+          return `<div class="recipe-card" style="opacity:0.85">
+            <h3>${escapeHtml(r.name)}</h3>
+            <div class="muted">Удалён. Осталось дней до автоудаления: ${daysLeft}</div>
+            <div class="row" style="margin-top:8px">
+              <button class="ghost" data-action="restore-recipe" data-id="${r.id}">↩️ Восстановить</button>
+              <button class="danger" data-action="hard-delete-recipe" data-id="${r.id}">❌ Удалить навсегда</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </details>
+  </div>`;
+
   main.innerHTML = html;
   bindRecipesEvents();
+  bindTrashEvents();
 }
 
 function renderRecipeForm(){
@@ -1049,6 +1141,13 @@ function weekTotalsHtml(){
   </div>`;
 }
 
+function bindTrashEvents(){
+  document.querySelectorAll('[data-action="restore-recipe"]').forEach(b=> b.addEventListener('click', ()=> restoreRecipe(b.dataset.id)));
+  document.querySelectorAll('[data-action="hard-delete-recipe"]').forEach(b=> b.addEventListener('click', ()=> hardDeleteTrash(b.dataset.id)));
+  const det = document.getElementById('trashDetails');
+  if(det){ det.addEventListener('toggle', ()=>{ state.showTrash = det.open; }); }
+}
+
 function bindPlanEvents(){
   document.getElementById('prevWeek')?.addEventListener('click', ()=> changeWeek(-1));
   document.getElementById('nextWeek')?.addEventListener('click', ()=> changeWeek(1));
@@ -1275,6 +1374,7 @@ async function init(){
   await initFirebase();
   if(state.localMode){
     loadLocal();
+    purgeExpiredTrashLocal();
     await seedRecipes();
     state.loading = false;
     render();
@@ -1291,6 +1391,7 @@ async function init(){
         state.pwVerified = true;
       }
       subscribeRecipes();
+      subscribeTrash();
       subscribeWeek(state.weekKey);
       // seed if empty (one-time)
       setTimeout(async ()=>{ if(state.recipes.length===0) await seedRecipes(); }, 1200);
