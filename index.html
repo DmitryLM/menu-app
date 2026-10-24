@@ -798,6 +798,14 @@ async function hardDeleteTrash(id){
       const v = await getDocFromServer(doc(state.db,'households',state.householdId,'trash',id));
       committed = !v.exists();
       console.log('[HARDDELETE] Verification result: exists=', v.exists(), 'committed=', committed);
+    // Additional check: fetch entire trash collection to verify server state
+    try {
+      const allTrash = await getDocsFromServer(trashCol());
+      console.log('[HARDDELETE] Trash collection count AFTER delete:', allTrash.docs.length, 'docs');
+      allTrash.docs.forEach(d => console.log('[HARDDELETE]   trash doc:', d.id));
+    } catch(ce) {
+      console.error('[HARDDELETE] Collection verification failed:', ce.code || ce.message || ce);
+    }
     } catch(ve){
       console.error('[HARDDELETE] Verification failed:', ve.code || ve.message || ve);
       committed = 'unknown';
