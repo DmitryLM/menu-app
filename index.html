@@ -767,12 +767,32 @@ async function hardDeleteTrash(id){
   render();
   try {
     await deleteDoc(doc(state.db,'households',state.householdId,'trash',id));
-    toast('❌ Удалено навсегда');
+    // server-side confirmation to tell offline-pending vs truly committed
+    let committed = true;
+    try {
+      const v = await getDocFromServer(doc(state.db,'households',state.householdId,'trash',id));
+      committed = !v.exists();
+    } catch(ve){
+      console.error('verify failed', ve);
+      committed = 'unknown';
+    }
+    console.error('HARDDELETE_RESULT', id, 'committed=', committed, 'online=', navigator.onLine);
+    if(committed === true){
+      toast('✅ Сервер подтвердил удаление');
+    } else if(committed === false){
+      // doc still exists server-side -> roll back optimistic
+      if(item) state.trash.unshift(item);
+      render();
+      alert('Удаление не прошло на сервере.\nИндикатор связи: ' + (navigator.onLine?'онлайн':'оффлайн') + '\n\nПроверьте правила Firestore (могли истечь) или консоль браузера.');
+    } else {
+      toast('⚠️ Не удалось проверить сервер: ' + committed);
+    }
   } catch(e){
     console.error('hardDeleteTrash failed', e);
     if(item) state.trash.unshift(item);
     render();
-    toast('❌ Ошибка удаления: ' + (e.code||e.message||e));
+    toast('❌ Ошибка: ' + (e.code||e.message||e));
+    alert('Удаление провалилось: ' + (e.code||e.message||e));
   }
 }
 
