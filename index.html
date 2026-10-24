@@ -144,7 +144,7 @@
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore, collection, doc, onSnapshot, setDoc, addDoc, updateDoc, deleteDoc, serverTimestamp, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getFirestore, collection, doc, onSnapshot, setDoc, addDoc, updateDoc, deleteDoc, serverTimestamp, getDoc, getDocFromServer } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const FIREBASE_CONFIG = {
@@ -754,7 +754,7 @@ async function restoreRecipe(id){
 }
 
 async function hardDeleteTrash(id){
-  if(!(window.__TEST__skipConfirm) && !confirm('Удалить навсегда? Это действие необратимо.')) return;
+  if(!confirm('Удалить навсегда? Это действие необратимо.')) return;
   const item = state.trash.find(x=>x.id===id);
   if(state.localMode){
     state.trash = state.trash.filter(x=>x.id!==id);
@@ -762,17 +762,17 @@ async function hardDeleteTrash(id){
     toast('❌ Удалено навсегда');
     return;
   }
-  // optimistic
+  // optimistic update
   state.trash = state.trash.filter(x=>x.id!==id);
   render();
   try {
     await deleteDoc(doc(state.db,'households',state.householdId,'trash',id));
     toast('❌ Удалено навсегда');
   } catch(e){
-    console.error(e);
+    console.error('hardDeleteTrash failed', e);
     if(item) state.trash.unshift(item);
     render();
-    toast('❌ Ошибка удаления');
+    toast('❌ Ошибка удаления: ' + (e.code||e.message||e));
   }
 }
 
